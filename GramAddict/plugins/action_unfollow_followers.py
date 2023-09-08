@@ -162,6 +162,24 @@ class ActionUnfollowFollowers(Plugin):
             configs=configs,
         )
         def job():
+            with open(
+                f"accounts/{self.session_state.my_username}/following_compared.txt",
+                "r",
+            ) as f:
+                f.seek(0)
+                # read the first line only
+                first_line = f.readline()
+                if first_line == "":
+                    compared_following_count = 0
+                else:
+                    compared_following_count = int(first_line)
+
+            if compared_following_count == self.session_state.my_following_count:
+                logger.critical(
+                    f"Following count is the same ({compared_following_count}) as before. Probably you got a soft ban."
+                )
+                quit(0)
+
             self.unfollow(
                 device,
                 count - self.state.unfollowed_count,
@@ -215,7 +233,6 @@ class ActionUnfollowFollowers(Plugin):
         self.session_state.totalUnfollowed += 1
 
     def sort_followings_by_date(self, device, newest_to_oldest=False) -> bool:
-
         sort_button = device.find(
             resourceId=self.ResourceID.SORTING_ENTRY_ROW_OPTION,
         )
@@ -377,7 +394,6 @@ class ActionUnfollowFollowers(Plugin):
                     UnfollowRestriction.FOLLOWED_BY_SCRIPT,
                     UnfollowRestriction.FOLLOWED_BY_SCRIPT_NON_FOLLOWERS,
                 ]:
-
                     if following_status == FollowingStatus.NOT_IN_LIST:
                         logger.info(
                             f"@{username} has not been followed by this bot. Skip."
