@@ -318,9 +318,9 @@ class DeviceFacade:
             raise DeviceFacade.JsonRpcError(e)
 
     def get_info(self):
-        # {'currentPackageName': 'net.oneplus.launcher', 'displayHeight': 1920, 'displayRotation': 0, 'displaySizeDpX': 411,
-        # 'displaySizeDpY': 731, 'displayWidth': 1080, 'productName': 'OnePlus5', '
-        #  screenOn': True, 'sdkInt': 27, 'naturalOrientation': True}
+        # {'currentPackageName': 'net.oneplus.launcher', 'displayHeight': 1920, 'displayRotation': 0,
+        # 'displaySizeDpX': 411, 'displaySizeDpY': 731, 'displayWidth': 1080, 'productName': 'OnePlus5', ' screenOn':
+        # True, 'sdkInt': 27, 'naturalOrientation': True}
         try:
             return self.deviceV2.info
         except uiautomator2.JSONRPCError as e:

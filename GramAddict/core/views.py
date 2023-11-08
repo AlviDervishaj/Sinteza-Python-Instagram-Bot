@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+import string
 from enum import Enum, auto
 from random import choice, randint, uniform
 from time import sleep
@@ -20,6 +21,7 @@ from GramAddict.core.device_facade import (
 from GramAddict.core.resources import ClassName
 from GramAddict.core.resources import ResourceID as resources
 from GramAddict.core.resources import TabBarText
+from GramAddict.core.scroll_end_detector import ScrollEndDetector
 from GramAddict.core.utils import (
     ActionBlockedError,
     close_instagram,
@@ -28,9 +30,6 @@ from GramAddict.core.utils import (
     random_sleep,
     save_crash,
     skip_smart_lock,
-    stop_bot,
-    head_up_notifications,
-    kill_atx_agent,
     stop_bot,
 )
 
@@ -1200,36 +1199,34 @@ class AccountView:
             logger.info("Options button doesn't exists!")
 
     def refresh_account(self):
-            try:
-                d = self.device.find
-                profile_view = d(resourceIdMatches=ResourceID.IS_PROFILE_VIEW)
-                if not profile_view.exists():
-                    self.navigate_to_main_account()
-                textview = d(
-                    resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+        try:
+            d = self.device.find
+            profile_view = d(resourceIdMatches=ResourceID.IS_PROFILE_VIEW)
+            if not profile_view.exists():
+                self.navigate_to_main_account()
+            textview = d(
+                resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+            )
+            universal_actions = UniversalActions(self.device)
+            if textview.exists(Timeout.SHORT):
+                logger.info("Refresh account...")
+                universal_actions.swipe_points(
+                    direction=Direction.UP,
+                    start_point_y=textview.get_bounds()["bottom"],
+                    delta_y=280,
                 )
-                universal_actions = UniversalActions(self.device)
-                if textview.exists(Timeout.SHORT):
-                    logger.info("Refresh account...")
-                    universal_actions.swipe_points(
-                        direction=Direction.UP,
-                        start_point_y=textview.get_bounds()["bottom"],
-                        delta_y=280,
-                    )
-                    random_sleep(modulable=False)
-                obj = d(
-                    resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+                random_sleep(modulable=False)
+            obj = d(
+                resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+            )
+            if not obj.exists(Timeout.MEDIUM):
+                logger.debug(
+                    "Can't see Posts, Followers and Following after the refresh, maybe we moved a little bit bottom.. Swipe down."
                 )
-                if not obj.exists(Timeout.MEDIUM):
-                    logger.debug(
-                        "Can't see Posts, Followers and Following after the refresh, maybe we moved a little bit bottom.. Swipe down."
-                    )
-                    universal_actions.swipe_points(Direction.UP)
-            except:
-                logger.info("ACCOUNT REFRESH ERROR\n")
-                stop_bot(self.device, None, None, False)
-
-
+                universal_actions.swipe_points(Direction.UP)
+        except:
+            logger.info("ACCOUNT REFRESH ERROR\n")
+            stop_bot(self.device, None, None, False)
 
 
 class SettingsView:
@@ -1802,7 +1799,6 @@ class ProfileView(ActionBarView):
                             return last_index - 1, n
 
     def getProfileInfo(self):
-
         username = self.getUsername()
         posts = self.getPostsCount()
         followers = self.getFollowersCount()
@@ -1873,17 +1869,57 @@ class ProfileView(ActionBarView):
 
     def navigateToFollowers(self):
         logger.info("Navigate to followers.")
+        logger.info("Trying to type in search box ...")
         followers_button = self.device.find(
             resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_FOLLOWERS_CONTAINER
         )
+        letters = list(string.ascii_lowercase)
         if followers_button.exists(Timeout.LONG):
             followers_button.click()
+            row_search = self.device.find(
+                resourceId=ResourceID.ROW_SEARCH_EDIT_TEXT,
+                className=ClassName.EDIT_TEXT,
+            )
+            sleep(1.4)
+            with open(f"accounts/{args.username}/track_followers.txt", "r+") as f:
+                f.seek(0)
+                data = f.read()
+                if data == "" or data.strip() == "":
+                    data = "a"
+                logger.info(f"DATA : {data}")
+            with open(f"accounts/{args.username}/track_followers.txt", "w+") as f:
+                f.seek(0)
+                scrollEndDetector = ScrollEndDetector(
+                    repeats_to_end=1,
+                    skipped_list_limit=0,
+                    skipped_fling_limit=0,
+                )
+                if data != "" or data.strip() != "" and data in letters:
+                    current_index: int = letters.index(data)
+                    if current_index == (len(letters) - 1):
+                        logger.warning(f"{letters[current_index]} is the last letter. ")
+                    elif scrollEndDetector.is_the_end():
+                        f.write(
+                            letters[
+                                current_index + 1
+                                if current_index + 1 < len(letters)
+                                else 0
+                            ]
+                        )
+                        data = letters[
+                            current_index + 1 if current_index + 1 < len(letters) else 0
+                        ]
+                else:
+                    f.write(letters[0])
+                    data = letters[0]
+            row_search.set_text(data)
             followers_tab = self.device.find(
                 resourceIdMatches=ResourceID.UNIFIED_FOLLOW_LIST_TAB_LAYOUT
             ).child(textContains="Followers")
             if followers_tab.exists(Timeout.LONG):
                 if not followers_tab.get_property("selected"):
                     followers_tab.click()
+
                 return True
         else:
             logger.error("Can't find followers tab!")
@@ -2029,7 +2065,9 @@ class FollowingView:
                     logger.error(f"Cannot find {username} in following list.")
                     return False
             else:
-                logger.error(f"Cannot find {username} in following list, but could be stuck")
+                logger.error(
+                    f"Cannot find {username} in following list, but could be stuck"
+                )
                 return False
         following_button = user_row.child(index=2)
 
@@ -2210,7 +2248,6 @@ class UniversalActions:
         self.swipe_points(direction=Direction.UP)
         random_sleep(inf=5, sup=8, modulable=False)
 
-
     @staticmethod
     def log_in_after_log_out(self, username) -> bool:
         if username is None:
@@ -2218,16 +2255,14 @@ class UniversalActions:
             return False
         logger.info(f"Logging back in to {username}")
         d = self.device.find
-        login_button = d(resourceId=ResourceID.LOG_IN_BUTTON_AFTER) 
+        login_button = d(resourceId=ResourceID.LOG_IN_BUTTON_AFTER)
         if login_button.exists():
             login_button.click()
-        else: 
+        else:
             logger.error("Could not find log in button.")
             return False
         login_button.wait_gone(Timeout.LONG)
         return True
-
-
 
     @staticmethod
     def detect_block(device) -> bool:

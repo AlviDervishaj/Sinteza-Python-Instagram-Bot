@@ -102,7 +102,6 @@ def start_bot(**kwargs):
     timeout_startup = get_value(configs.args.timeout_startup, None, 0)
     if timeout_startup:
         countdown(timeout_startup, "Bot starting in {:02d} minutes")
-        countdown(random.randint(0, 59), "Bot starting in {:02d} seconds")
     session_state = None
     if str(configs.args.total_sessions) != "-1":
         total_sessions = get_value(configs.args.total_sessions, None, -1)

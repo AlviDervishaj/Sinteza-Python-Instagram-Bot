@@ -165,6 +165,7 @@ class ResourceID:
             f"{APP_ID}:id/row_profile_header_textview_post_count"
         )
         self.ROW_SEARCH_EDIT_TEXT = f"{APP_ID}:id/row_search_edit_text"
+
         self.ROW_SEARCH_USER_USERNAME = f"{APP_ID}:id/row_search_user_username"
         self.ROW_SIMPLE_TEXT_TEXTVIEW = f"{APP_ID}:id/row_simple_text_textview"
         self.ROW_THREAD_COMPOSER_BUTTON_SEND = (
