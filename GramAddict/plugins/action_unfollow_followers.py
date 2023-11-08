@@ -129,7 +129,8 @@ class ActionUnfollowFollowers(Plugin):
 
         count = min(
             count_arg,
-            self.session_state.my_following_count - int(self.args.min_following),
+            self.session_state.my_following_count -
+            int(self.args.min_following),
         )
         if count < 1:
             logger.warning(
@@ -162,24 +163,6 @@ class ActionUnfollowFollowers(Plugin):
             configs=configs,
         )
         def job():
-            with open(
-                f"accounts/{self.session_state.my_username}/following_compared.txt",
-                "r",
-            ) as f:
-                f.seek(0)
-                # read the first line only
-                first_line = f.readline()
-                if first_line == "":
-                    compared_following_count = 0
-                else:
-                    compared_following_count = int(first_line)
-
-            if compared_following_count == self.session_state.my_following_count:
-                logger.critical(
-                    f"Following count is the same ({compared_following_count}) as before. Probably you got a soft ban."
-                )
-                quit(0)
-
             self.unfollow(
                 device,
                 count - self.state.unfollowed_count,
@@ -233,30 +216,31 @@ class ActionUnfollowFollowers(Plugin):
         self.session_state.totalUnfollowed += 1
 
     def sort_followings_by_date(self, device, newest_to_oldest=False) -> bool:
-        sort_button = device.find(
-            resourceId=self.ResourceID.SORTING_ENTRY_ROW_OPTION,
-        )
-        if not sort_button.exists(Timeout.MEDIUM):
-            logger.error(
-                "Cannot find button to sort followings. Continue without sorting."
-            )
-            return False
-        sort_button.click()
 
-        sort_options_recycler_view = device.find(
-            resourceId=self.ResourceID.FOLLOW_LIST_SORTING_OPTIONS_RECYCLER_VIEW
-        )
-        if not sort_options_recycler_view.exists(Timeout.MEDIUM):
-            logger.error(
-                "Cannot find options to sort followings. Continue without sorting."
-            )
-            return False
-        if newest_to_oldest:
-            logger.info("Sort followings by date: from newest to oldest.")
-            sort_options_recycler_view.child(textContains="Latest").click()
-        else:
-            logger.info("Sort followings by date: from oldest to newest.")
-            sort_options_recycler_view.child(textContains="Earliest").click()
+        # sort_button = device.find(
+        #     resourceId=self.ResourceID.SORTING_ENTRY_ROW_OPTION,
+        # )
+        # if not sort_button.exists(Timeout.MEDIUM):
+        #     logger.error(
+        #         "Cannot find button to sort followings. Continue without sorting."
+        #     )
+        #     return False
+        # sort_button.click()
+
+        # sort_options_recycler_view = device.find(
+        #     resourceId=self.ResourceID.FOLLOW_LIST_SORTING_OPTIONS_RECYCLER_VIEW
+        # )
+        # if not sort_options_recycler_view.exists(Timeout.MEDIUM):
+        #     logger.error(
+        #         "Cannot find options to sort followings. Continue without sorting."
+        #     )
+        #     return False
+        # if newest_to_oldest:
+        #     logger.info("Sort followings by date: from newest to oldest.")
+        #     sort_options_recycler_view.child(textContains="Latest").click()
+        # else:
+        #     logger.info("Sort followings by date: from oldest to newest.")
+        #     sort_options_recycler_view.child(textContains="Earliest").click()
         return True
 
     def iterate_over_followings(
@@ -394,6 +378,7 @@ class ActionUnfollowFollowers(Plugin):
                     UnfollowRestriction.FOLLOWED_BY_SCRIPT,
                     UnfollowRestriction.FOLLOWED_BY_SCRIPT_NON_FOLLOWERS,
                 ]:
+
                     if following_status == FollowingStatus.NOT_IN_LIST:
                         logger.info(
                             f"@{username} has not been followed by this bot. Skip."
@@ -465,7 +450,8 @@ class ActionUnfollowFollowers(Plugin):
 
             if screen_iterated_followings != prev_screen_iterated_followings:
                 prev_screen_iterated_followings = screen_iterated_followings
-                logger.info("Need to scroll now.", extra={"color": f"{Fore.GREEN}"})
+                logger.info("Need to scroll now.", extra={
+                            "color": f"{Fore.GREEN}"})
                 list_view.scroll(Direction.DOWN)
                 # device.swipe_points(sx=screen_dimensions/2, sy=scroll, ex=screen_dimensions/2, ey=list_view_top, random_y=False, speed=0.8)
             else:
@@ -509,16 +495,19 @@ class ActionUnfollowFollowers(Plugin):
             return False
         username_view.click_retry()
 
-        is_following_you = self.check_is_follower(device, username, my_username)
+        is_following_you = self.check_is_follower(
+            device, username, my_username)
         if is_following_you is not None:
             if check_if_is_follower and is_following_you:
                 if not unfollow_followers:
-                    logger.info(f"Skip @{username}. This user is following you.")
+                    logger.info(
+                        f"Skip @{username}. This user is following you.")
                     logger.info("Back to the followings list.")
                     device.back()
                     return False
                 else:
-                    logger.info(f"@{username} is following you, unfollow. ðŸ˜ˆ")
+                    logger.info(
+                        f"@{username} is following you, unfollow. ðŸ˜ˆ")
             unfollow_button = device.find(
                 classNameMatches=ClassName.BUTTON_OR_TEXTVIEW_REGEX,
                 clickable=True,
@@ -544,7 +533,8 @@ class ActionUnfollowFollowers(Plugin):
                 save_crash(device)
             logger.debug("Unfollow button click.")
             unfollow_button.click()
-            logger.info(f"Unfollow @{username}.", extra={"color": f"{Fore.YELLOW}"})
+            logger.info(f"Unfollow @{username}.",
+                        extra={"color": f"{Fore.YELLOW}"})
 
             # Weirdly enough, this is a fix for after you unfollow someone that follows
             # you back - the next person you unfollow the button is missing on first find

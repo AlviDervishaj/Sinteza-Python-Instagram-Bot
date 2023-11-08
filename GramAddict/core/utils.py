@@ -78,26 +78,25 @@ def update_available():
 
 
 def check_if_updated(crash=False):
-    return
-    # if not crash:
-    #     logger.info("Checking for updates...")
-    # new_update, version = update_available()
-    # if new_update:
-    #     logger.warning("NEW VERSION FOUND!")
-    #     logger.warning(
-    #         f"Version {version} has been released! Please update so that you can get all the latest features and bugfixes. Changelog here -> https://github.com/GramAddict/bot/blob/master/CHANGELOG.md"
-    #     )
-    #     logger.warning("HOW TO UPDATE:")
-    #     logger.warning("If you installed with pip: pip3 install GramAddict -U")
-    #     logger.warning("If you installed with git: git pull")
-    #     sleep(5)
-    # elif not crash:
-    #     logger.info("Bot is updated.", extra={"color": f"{Style.BRIGHT}"})
-    # if not crash:
-    #     logger.info(
-    #         f"GramAddict v.{__version__}",
-    #         extra={"color": f"{Style.BRIGHT}{Fore.MAGENTA}"},
-    #     )
+    if not crash:
+        logger.info("Checking for updates...")
+    new_update, version = update_available()
+    if new_update:
+        logger.warning("NEW VERSION FOUND!")
+        logger.warning(
+            f"Version {version} has been released! Please update so that you can get all the latest features and bugfixes. Changelog here -> https://github.com/GramAddict/bot/blob/master/CHANGELOG.md"
+        )
+        logger.warning("HOW TO UPDATE:")
+        logger.warning("If you installed with pip: pip3 install GramAddict -U")
+        logger.warning("If you installed with git: git pull")
+        sleep(5)
+    elif not crash:
+        logger.info("Bot is updated.", extra={"color": f"{Style.BRIGHT}"})
+    if not crash:
+        logger.info(
+            f"GramAddict v.{__version__}",
+            extra={"color": f"{Style.BRIGHT}{Fore.MAGENTA}"},
+        )
 
 
 def ask_for_a_donation():
@@ -647,7 +646,7 @@ def sample_sources(sources, n_sources):
         )
     truncaded = sources
     logger.info(
-        f"In this session, {'that source' if len(truncaded)<=1 else 'these sources'} will be handled: {', '.join(emoji.emojize(str(x)) for x in truncaded)}"
+        f"In this session, {'that source' if len(truncaded)<=1 else 'these sources'} will be handled: {', '.join(emoji.emojize(str(x), use_aliases=True) for x in truncaded)}"
     )
     return truncaded
 
@@ -669,7 +668,7 @@ def generate_list_of_users(filename: str, min_days: int) -> list:
     usernames = [
         u
         for u in file
-        if file[u].get("following_status") in ["followed", "requested"]
+        if file[u].get("following_status") in ["followed"]
         and _check_date(file[u].get("last_interaction"))
         and _check_if_exists(file[u].get("exists"))
     ]

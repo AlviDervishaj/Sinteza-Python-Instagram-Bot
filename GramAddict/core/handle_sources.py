@@ -911,7 +911,7 @@ def iterate_over_followers(
                     scroll_end_detector.notify_skipped_all()
                     if scroll_end_detector.is_skipped_limit_reached():
                         with open(
-                            f"accounts/{session_state.my_username}/blacklist.txt", "a+"
+                            f"accounts/{session_state.my_username}/blacklist_users.txt", "a+"
                         ) as f:
                             # write the username of the instagram account
                             f.write(f"{target}\n")
@@ -937,3 +937,4 @@ def iterate_over_followers(
                 extra={"color": f"{Fore.GREEN}"},
             )
             return
+

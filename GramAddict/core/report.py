@@ -195,12 +195,6 @@ def print_scrape_report(source, session_state):
     )
 
 
-def add_to_blacklist_if_interaction_count_is_zero(source, target):
-    logger.info(f"[ADASDASD] {source} {target}")
-    with open(f"accounts/{target}/blacklist.txt") as f:
-        f.write(f"{source}\n")
-
-
 def _stringify_interactions(interactions):
     if len(interactions) == 0:
         return "0"

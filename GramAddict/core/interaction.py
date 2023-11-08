@@ -825,6 +825,7 @@ def load_random_message(my_username: str, welcoming: bool = False) -> Optional[s
                 if random_message != "":
                     return emoji.emojize(
                         spintax.spin(random_message.replace("\\n", "\n")),
+                        use_aliases=True,
                     )
                 else:
                     return None
@@ -871,7 +872,7 @@ def load_random_comment(my_username: str, media_type: MediaType) -> Optional[str
                     choice(carousel_comments) if len(carousel_comments) > 0 else ""
                 )
             if random_comment != "":
-                return emoji.emojize(spintax.spin(random_comment))
+                return emoji.emojize(spintax.spin(random_comment), use_aliases=True)
             else:
                 return None
     else:

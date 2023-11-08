@@ -1,6 +1,7 @@
 import logging
 from functools import partial
 from random import seed
+import os
 
 from colorama import Style
 
@@ -70,8 +71,6 @@ class InteractBloggerFollowers_Following(Plugin):
         else:
             sources = [s for s in self.args.blogger_following if s.strip()]
 
-
-
         # Start
         for source in sample_sources(sources, self.args.truncate_sources):
             (
@@ -82,17 +81,24 @@ class InteractBloggerFollowers_Following(Plugin):
             limit_reached = active_limits_reached or actions_limit_reached
 
             self.state = State()
-            with open(f"accounts/{self.session_state.my_username}/blacklist.txt") as f:
-                blacklist = f.read().splitlines()
-                if source in blacklist:
-                    logger.info(f"Skipping blacklisted source: {source}")
-                    continue
-
             is_myself = source[1:] == self.session_state.my_username
             its_you = " (it's you)" if is_myself else ""
             logger.info(
                 f"Handle {source} {its_you}", extra={"color": f"{Style.BRIGHT}"}
             )
+
+            # check if source is in blacklist
+            # open file
+            if os.path.exists(f"accounts/{self.session_state.my_username}/blacklist_users.txt") == False:
+                with open(f"accounts/{self.session_state.my_username}/blacklist_users.txt", "w") as file:
+                    file.write("")
+            with open(f"accounts/{self.session_state.my_username}/blacklist_users.txt", "r") as file:
+                blacklist = file.read().splitlines()
+            # check if source is in blacklist
+            if source in blacklist:
+                logger.info(f"Skipping {source} because it is in blacklist")
+                # continue to next source
+                continue
 
             # Init common things
             (

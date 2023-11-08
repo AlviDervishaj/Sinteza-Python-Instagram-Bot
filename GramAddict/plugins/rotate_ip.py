@@ -5,6 +5,7 @@ from subprocess import PIPE, run
 
 from GramAddict.core.plugin_loader import Plugin
 from GramAddict.core.resources import AndroidElements
+from GramAddict.core.utils import stop_bot
 
 logger = logging.getLogger(__name__)
 
@@ -38,24 +39,29 @@ class RotateIp(Plugin):
         return ip
 
     def rotate_ip(self):
-        logger.debug("Open settings")
-        self._execute_cmd(self.airplane_mode)
-        switcher = self.device.find(resourceIdMatches=AndroidElements.SWITCH_WIDGET)
-        if switcher.get_checked():
-            logger.debug("Already in airplane mode! Switch off as starting point")
+        try:
+            logger.debug("Open settings")
+            self._execute_cmd(self.airplane_mode)
+            switcher = self.device.find(resourceIdMatches=".*:id/switch_widget")
+            if switcher.get_checked():
+                logger.debug("Already in airplane mode! Switch off as starting point")
+                switcher.click()
+            old_ip = self.get_ip()
+            logger.debug("Switch to airplane mode")
             switcher.click()
-        old_ip = self.get_ip()
-        logger.debug("Switch to airplane mode")
-        switcher.click()
-        logger.debug("Wait for 5 seconds...")
-        time.sleep(5)
-        logger.debug("Switch back")
-        switcher.click()
-        new_ip = self.get_ip()
-        logger.debug("Back")
-        self.device.back()
-        logger.debug("Done!")
-        return old_ip, new_ip
+            logger.debug("Wait for 5 seconds...")
+            time.sleep(5)
+            logger.debug("Switch back")
+            switcher.click()
+            new_ip = self.get_ip()
+            logger.debug("Back")
+            self.device.back()
+            logger.debug("Done!")
+            return old_ip, new_ip
+        except:
+            logger.error("IP REFRESH ERROR\n")
+            stop_bot(self.device, None, None, False)
+            return old_ip, old_ip
 
     def _execute_cmd(self, cmd):
         proc = run(cmd, shell=True, stdout=PIPE)
@@ -69,7 +75,7 @@ class RotateIp(Plugin):
         self.airplane_mode = (
             f"{self._adb} shell am start -a android.settings.AIRPLANE_MODE_SETTINGS"
         )
-        self.rmnet0 = f"{self._adb} shell ip addr show rmnet0"
+        self.rmnet0 = f"{self._adb} shell ip addr show seth_lte1"
 
         logger.info("Rotating IP...")
         old_ip, new_ip = self.rotate_ip()

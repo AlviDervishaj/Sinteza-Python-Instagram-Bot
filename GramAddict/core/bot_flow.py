@@ -1,5 +1,4 @@
 import logging
-import pathlib
 import random
 from datetime import datetime, timedelta
 from time import sleep
@@ -30,6 +29,7 @@ from GramAddict.core.utils import (
     check_screen_timeout,
     close_instagram,
     config_examples,
+    countdown,
     get_instagram_version,
     get_value,
     head_up_notifications,
@@ -61,7 +61,7 @@ def start_bot(**kwargs):
     if not kwargs:
         if "--config" not in configs.args:
             logger.info(
-                "It's strongly recommend to use a config.yml file.",
+                "It's strongly recommend to use a config.yml file. Follow these links for more details: https://docs.gramaddict.org/#/configuration and https://github.com/GramAddict/bot/tree/master/config-examples",
                 extra={"color": f"{Fore.GREEN}{Style.BRIGHT}"},
             )
             sleep(3)
@@ -99,10 +99,10 @@ def start_bot(**kwargs):
         )
         return
     device = create_device(configs.device_id, configs.app_id)
-    # timeout_startup = get_value(configs.args.timeout_startup, None, 0)
-    # if timeout_startup:
-    #     countdown(timeout_startup, "Bot starting in {:02d} minutes")
-    #     countdown(random.randint(0, 59), "Bot starting in {:02d} seconds")
+    timeout_startup = get_value(configs.args.timeout_startup, None, 0)
+    if timeout_startup:
+        countdown(timeout_startup, "Bot starting in {:02d} minutes")
+        countdown(random.randint(0, 59), "Bot starting in {:02d} seconds")
     session_state = None
     if str(configs.args.total_sessions) != "-1":
         total_sessions = get_value(configs.args.total_sessions, None, -1)
@@ -181,32 +181,11 @@ def start_bot(**kwargs):
                 logger.error(
                     f"Failed to update log file name. Will continue anyway. {e}"
                 )
-        report_string = (
-            f"Hello, @{session_state.my_username}! You have {session_state.my_followers_count} followers "
-            f"and {session_state.my_following_count} followings so far."
-        )
+        report_string = f"Hello, @{session_state.my_username}! You have {session_state.my_followers_count} followers and {session_state.my_following_count} followings so far."
         logger.info(report_string, extra={"color": f"{Style.BRIGHT}{Fore.GREEN}"})
-        # check if /accounts/session_state.my_username/following_compare.txt exists
-        # if not, create it
-
-        # check if /accounts/session_state.my_username/followers_compare.txt exists
-        # if not, create it
-
-        if not pathlib.Path(
-            f"accounts/{session_state.my_username}/following_compared.txt"
-        ).is_file():
-            # create file
-            with open(
-                f"accounts/{session_state.my_username}/following_compared.txt", "w"
-            ) as f:
-                f.write("")
-            logger.info(
-                f"Created following_compared.txt file for {session_state.my_username}"
-            )
         if configs.args.repeat:
             logger.info(
-                f"You have {total_sessions + 1 - len(sessions) if total_sessions > 0 else 'infinite'} session(s) "
-                f"left. You can stop the bot by pressing CTRL+C in console.",
+                f"You have {total_sessions + 1 - len(sessions) if total_sessions > 0 else 'infinite'} session(s) left. You can stop the bot by pressing CTRL+C in console.",
                 extra={"color": f"{Style.BRIGHT}{Fore.BLUE}"},
             )
             sleep(3)
@@ -219,7 +198,6 @@ def start_bot(**kwargs):
 
         print_limits = True
         unfollow_jobs = [x for x in jobs_list if "unfollow" in x]
-
         logger.info(
             f"There is/are {len(jobs_list)-len(unfollow_jobs)} active-job(s) and {len(unfollow_jobs)} unfollow-job(s) scheduled for this session."
         )
@@ -329,13 +307,6 @@ def start_bot(**kwargs):
 
         # turn off bot
         close_instagram(device)
-        # update
-        with open(
-            f"accounts/{session_state.my_username}/following_compared.txt",
-            "w",
-        ) as f:
-            f.seek(0)
-            f.write(str(session_state.my_following_count))
         if configs.args.screen_sleep:
             device.screen_off()
             logger.info("Screen turned off for sleeping time.")

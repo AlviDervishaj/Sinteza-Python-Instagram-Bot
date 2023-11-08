@@ -82,7 +82,7 @@ class InteractHashtagLikers(Plugin):
             if source[0] != "#":
                 source = "#" + source
             logger.info(
-                f"Handle {emoji.emojize(source)}",
+                f"Handle {emoji.emojize(source, use_aliases=True)}",
                 extra={"color": f"{Fore.BLUE}"},
             )
 

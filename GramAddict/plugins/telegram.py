@@ -1,4 +1,5 @@
 import json
+import csv
 import logging
 import sys
 from datetime import datetime, timedelta
@@ -171,6 +172,74 @@ class TelegramReports(Plugin):
                 n += 1
         except OverflowError:
             logger.info("Not able to get milestone ETA..")
+            # Define the name of the CSV file.
+        # Get the username from the config.
+        username = config.get("username")
+        print(f'Username: {username}')  # Print the username for debugging.
+
+        # Define the name of the CSV file.
+        filename = f'accounts/{username}/{username}_session_data.csv'
+        print(f'Filename: {filename}')  # Print the filename for debugging.
+
+        # Define the fieldnames for the CSV file.
+        fieldnames = ['start', 'finish', 'likes', 'watched', 'followed', 'unfollowed', 'comments', 'pm_sent', 'followers', 'following']
+
+        # Load the session data from the JSON file.
+        with open(f"accounts/{username}/sessions.json") as json_data:
+            activity = json.load(json_data)
+        # Load the timestamp of the last session that was written to the CSV file.
+        try:
+            with open('last_session_timestamp.txt', 'r') as f:
+                last_session_timestamp = f.read().strip()
+        except FileNotFoundError:
+            last_session_timestamp = ''
+
+        # Open the CSV file in append mode.
+        with open(filename, 'a', newline='') as csvfile:
+            # Create a CSV writer.
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            # If the file is empty, write the header.
+            if csvfile.tell() == 0:
+                writer.writeheader()
+
+            # Write each session to the CSV file.
+            for session in activity:
+                try:
+                    start = session["start_time"]
+                    finish = session["finish_time"]
+                    followed = session.get("total_followed", 0)
+                    unfollowed = session.get("total_unfollowed", 0)
+                    likes = session.get("total_likes", 0)
+                    watched = session.get("total_watched", 0)
+                    comments = session.get("total_comments", 0)
+                    pm_sent = session.get("total_pm", 0)
+                    followers = int(session.get("profile", 0).get("followers", 0))
+                    following = int(session.get("profile", 0).get("following", 0))
+
+                    filtered_session = {
+                        'start': start,
+                        'finish': finish,
+                        'likes': likes,
+                        'watched': watched,
+                        'followed': followed,
+                        'unfollowed': unfollowed,
+                        'comments': comments,
+                        'pm_sent': pm_sent,
+                        'followers': followers,
+                        'following': following
+                    }
+
+                    writer.writerow(filtered_session)
+                except TypeError:
+                    logger.error(f"The session {id} has malformed data, skip.")
+                    continue
+
+            print('CSV file written.')  # Print a message when the CSV file has been written. 
+        # Store the timestamp of the last session that was written to the CSV file.
+        with open('last_session_timestamp.txt', 'w') as f:
+            f.write(activity[-1]['start_time'])
+
 
         def undentString(string):
             return dedent(string[1:])[:-1]

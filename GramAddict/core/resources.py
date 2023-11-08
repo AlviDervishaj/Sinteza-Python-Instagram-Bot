@@ -23,6 +23,7 @@ class ResourceID:
         self.BUTTON = f"{APP_ID}:id/button"
         self.BUTTON_POSITIVE = f"{APP_ID}:id/button_positive"
         self.BUTTON_TEXT = f"{APP_ID}:id/button_text"
+        self.LOG_IN_BUTTON_AFTER = f"{APP_ID}:id/login_button"
         self.CAROUSEL_MEDIA_GROUP = f"{APP_ID}:id/carousel_media_group"
         self.CAROUSEL_IMAGE = f"{APP_ID}:id/carousel_image"
         self.CAROUSEL_IMAGE_MEDIA_GROUP = f"{APP_ID}:id/carousel_image_media_group"

@@ -2,7 +2,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from json import JSONEncoder, dumps
+from json import JSONEncoder
 
 from GramAddict.core.utils import get_value
 
@@ -282,10 +282,6 @@ class SessionState:
 
     def is_finished(self):
         return self.finishTime is not None
-
-    # define a class that prints the session state in a json format
-    def to_string(self):
-        return dumps(self, cls=SessionStateEncoder)
 
     class Limit(Enum):
         ALL = auto()
