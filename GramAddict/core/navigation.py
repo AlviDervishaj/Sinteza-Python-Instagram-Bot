@@ -74,7 +74,7 @@ def nav_to_blogger(device, username, current_job):
         profile_view = ProfileView(device, is_own_profile=False)
         if _to_followers:
             logger.info(f"Open @{username} followers.")
-            profile_view.navigateToFollowers()
+            profile_view.navigateToFollowers(username=username)
         elif _to_following:
             logger.info(f"Open @{username} following.")
             profile_view.navigateToFollowing()

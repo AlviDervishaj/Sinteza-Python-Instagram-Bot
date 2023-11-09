@@ -46,7 +46,7 @@ class ScrollEndDetector:
             self.skipped_all_fling = 0
             return True
 
-    def is_the_end(self):
+    def is_the_end(self, username=None, competitor=None):
         if len(self.pages) < 2:
             return False
 
@@ -65,6 +65,32 @@ class ScrollEndDetector:
                 f"Same users iterated {repeats} times. End of the list.",
                 extra={"color": f"{Fore.BLUE}"},
             )
+            if username and competitor:
+                # write to accounts/username/track_followers.txt
+                # if file contains one letter, delete the letter and write the next letter on the alphabet in the file
+                # if the file does not contain a letter or is empty, write the first letter of the alphabet in the file
+
+                # check if file exists
+                # open file
+                letter = open(f"accounts/{username}/{competitor}.txt", "r").read()
+                with open(f"accounts/{username}/{competitor}.txt", "w+") as file:
+                    # check if file is empty
+                    if letter == "":
+                        letter = "a"
+                        file.write(letter)
+                    # check if letter is z
+                    elif letter == "z":
+                        with open(
+                            f"accounts/{username}/blacklist.txt",
+                            "a+",
+                        ) as f:
+                            # write the username of the instagram account
+                            f.write(f"{competitor}\n")
+                    else:
+                        file.write(chr(ord(letter) + 1))
+
+                # end of writing to file
+
         elif repeats > 1:
             logger.info(
                 f"Same users iterated {repeats} times. Continue.",

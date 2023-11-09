@@ -1,7 +1,7 @@
 import datetime
 import logging
+import os
 import re
-import string
 from enum import Enum, auto
 from random import choice, randint, uniform
 from time import sleep
@@ -21,7 +21,6 @@ from GramAddict.core.device_facade import (
 from GramAddict.core.resources import ClassName
 from GramAddict.core.resources import ResourceID as resources
 from GramAddict.core.resources import TabBarText
-from GramAddict.core.scroll_end_detector import ScrollEndDetector
 from GramAddict.core.utils import (
     ActionBlockedError,
     close_instagram,
@@ -30,7 +29,6 @@ from GramAddict.core.utils import (
     random_sleep,
     save_crash,
     skip_smart_lock,
-    stop_bot,
 )
 
 logger = logging.getLogger(__name__)
@@ -1199,34 +1197,28 @@ class AccountView:
             logger.info("Options button doesn't exists!")
 
     def refresh_account(self):
-        try:
-            d = self.device.find
-            profile_view = d(resourceIdMatches=ResourceID.IS_PROFILE_VIEW)
-            if not profile_view.exists():
-                self.navigate_to_main_account()
-            textview = d(
-                resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+        d = self.device.find
+        profile_view = d(resourceIdMatches=ResourceID.IS_PROFILE_VIEW)
+        if not profile_view.exists():
+            self.navigate_to_main_account()
+        textview = d(
+            resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+        )
+        universal_actions = UniversalActions(self.device)
+        if textview.exists(Timeout.SHORT):
+            logger.info("Refresh account...")
+            universal_actions.swipe_points(
+                direction=Direction.UP,
+                start_point_y=textview.get_bounds()["bottom"],
+                delta_y=280,
             )
-            universal_actions = UniversalActions(self.device)
-            if textview.exists(Timeout.SHORT):
-                logger.info("Refresh account...")
-                universal_actions.swipe_points(
-                    direction=Direction.UP,
-                    start_point_y=textview.get_bounds()["bottom"],
-                    delta_y=280,
-                )
-                random_sleep(modulable=False)
-            obj = d(
-                resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER
+            random_sleep(modulable=False)
+        obj = d(resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_TEXTVIEW_POST_CONTAINER)
+        if not obj.exists(Timeout.MEDIUM):
+            logger.debug(
+                "Can't see Posts, Followers and Following after the refresh, maybe we moved a little bit bottom.. Swipe down."
             )
-            if not obj.exists(Timeout.MEDIUM):
-                logger.debug(
-                    "Can't see Posts, Followers and Following after the refresh, maybe we moved a little bit bottom.. Swipe down."
-                )
-                universal_actions.swipe_points(Direction.UP)
-        except:
-            logger.info("ACCOUNT REFRESH ERROR\n")
-            stop_bot(self.device, None, None, False)
+            universal_actions.swipe_points(Direction.UP)
 
 
 class SettingsView:
@@ -1867,60 +1859,55 @@ class ProfileView(ActionBarView):
             resourceId=ResourceID.ROW_PROFILE_HEADER_IMAGEVIEW,
         )
 
-    def navigateToFollowers(self):
+    def navigateToFollowers(self, username=None):
         logger.info("Navigate to followers.")
-        logger.info("Trying to type in search box ...")
         followers_button = self.device.find(
             resourceIdMatches=ResourceID.ROW_PROFILE_HEADER_FOLLOWERS_CONTAINER
         )
-        letters = list(string.ascii_lowercase)
         if followers_button.exists(Timeout.LONG):
             followers_button.click()
-            row_search = self.device.find(
-                resourceId=ResourceID.ROW_SEARCH_EDIT_TEXT,
-                className=ClassName.EDIT_TEXT,
-            )
-            sleep(1.4)
-            with open(f"accounts/{args.username}/track_followers.txt", "r+") as f:
-                f.seek(0)
-                data = f.read()
-                if data == "" or data.strip() == "":
-                    data = "a"
-                logger.info(f"DATA : {data}")
-            with open(f"accounts/{args.username}/track_followers.txt", "w+") as f:
-                f.seek(0)
-                scrollEndDetector = ScrollEndDetector(
-                    repeats_to_end=1,
-                    skipped_list_limit=0,
-                    skipped_fling_limit=0,
-                )
-                if data != "" or data.strip() != "" and data in letters:
-                    current_index: int = letters.index(data)
-                    if current_index == (len(letters) - 1):
-                        logger.warning(f"{letters[current_index]} is the last letter. ")
-                    elif scrollEndDetector.is_the_end():
-                        f.write(
-                            letters[
-                                current_index + 1
-                                if current_index + 1 < len(letters)
-                                else 0
-                            ]
-                        )
-                        data = letters[
-                            current_index + 1 if current_index + 1 < len(letters) else 0
-                        ]
-                else:
-                    f.write(letters[0])
-                    data = letters[0]
-            row_search.set_text(data)
             followers_tab = self.device.find(
                 resourceIdMatches=ResourceID.UNIFIED_FOLLOW_LIST_TAB_LAYOUT
             ).child(textContains="Followers")
+
             if followers_tab.exists(Timeout.LONG):
                 if not followers_tab.get_property("selected"):
                     followers_tab.click()
-
+                if username:
+                    sleep(5)
+                    search_row = self.device.find(
+                        resourceId=ResourceID.ROW_SEARCH_EDIT_TEXT
+                    )
+                    if search_row.exists(Timeout.MEDIUM):
+                        # open file
+                        if not os.path.exists(
+                            f"accounts/{args.username}/{username}.txt"
+                        ):
+                            with open(
+                                f"accounts/{args.username}/{username}.txt", "w"
+                            ) as f:
+                                f.write("a")
+                        letter = open(
+                            f"accounts/{args.username}/{username}.txt", "r"
+                        ).read()
+                        logger.error(letter)
+                        with open(f"accounts/{args.username}/{username}.txt", "w") as f:
+                            if letter == "":
+                                letter = "a"
+                            elif letter == "z":
+                                search_row.set_text(
+                                    letter, Mode.PASTE if args.dont_type else Mode.TYPE
+                                )
+                                return True
+                            f.seek(0)
+                            f.write(letter)
+                            f.truncate()
+                        sleep(1.4)
+                        search_row.set_text(
+                            letter, Mode.PASTE if args.dont_type else Mode.TYPE
+                        )
                 return True
+
         else:
             logger.error("Can't find followers tab!")
             return False
