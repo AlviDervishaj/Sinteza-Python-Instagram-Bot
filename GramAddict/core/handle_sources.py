@@ -382,6 +382,7 @@ def handle_likers(
         if not user_container or user_container is None:
             session_state.totalCrashes += 1
             logger.error("User Container is not found.")
+            session_state.check_limit(limit_type=session_state.Limit.CRASHES, output=True)
             continue
         std_height = user_container.get_height()
         job_iterated_users = []
