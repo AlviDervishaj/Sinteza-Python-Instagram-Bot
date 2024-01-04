@@ -662,7 +662,10 @@ class PostsViewList:
                         )
 
                 available_points = foil_cords - hole_cords
-                likes_view.click(Location.CUSTOM, coord=choice(list(available_points)))
+                if available_points:
+                    likes_view.click(Location.CUSTOM, coord=choice(list(available_points)))
+                else:
+                    logger.info("Can't find a point to click, skip.")
 
     def _has_tags(self) -> bool:
         tags_icon = self.device.find(
