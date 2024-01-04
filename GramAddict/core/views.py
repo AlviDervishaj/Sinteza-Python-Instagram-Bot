@@ -718,7 +718,7 @@ class PostsViewList:
                     resourceId=ResourceID.ROW_FEED_PROFILE_HEADER
                 )
                 if row_feed_profile_header.count_items() > 1:
-                    logger.info("This post hasn't the description...")
+                    logger.info("This post hasn't the description... ")
                     return False, "", username, is_ad, is_hashtag, has_tags
                 profile_header_is_above = row_feed_profile_header.is_above_this(
                     gap_view_obj if gap_view_obj.exists() else feed_composer
