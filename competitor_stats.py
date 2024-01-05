@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from datetime import datetime, timedelta
 
 def get_sessions_for_user(username: str) -> list:
@@ -24,7 +25,9 @@ def get_all_time_stats() -> list:
     total_unfollowed = 0
     total_likes = 0
     total_comments = 0
+    args = []
     total_watched = 0
+    hashtags = []
     target_accounts = []
     for session in sessions:
         # check if start time is in the past 7 days
@@ -38,6 +41,17 @@ def get_all_time_stats() -> list:
             total_likes += session['total_likes']
             total_comments += session['total_comments']
             total_watched += session['total_watched']
+            if with_args == "with_args":
+                args = session['args']
+            elif with_args == "with_hashtags":
+                if session['args']['hashtag_likers_top'] is not None:
+                    for hashtag in session['args']['hashtag_likers_top']:
+                        if hashtag in hashtags:
+                            continue
+                        else:
+                            hashtags.append(hashtag)
+                else:
+                    continue
             if session['args']['blogger_followers'] is not None:
                 for account in session['args']['blogger_followers']:
                     if account in target_accounts:
@@ -48,19 +62,45 @@ def get_all_time_stats() -> list:
                 continue
         else:
             continue
-    return {
-        'Total Interactions': total_interactions,
-        'Successful Interactions': successful_interactions,
-        'Total Followed': total_followed,
-        'Total Unfollowed': total_unfollowed,
-        'Total Likes': total_likes,
-        'Total Comments': total_comments,
-        'Total Watched': total_watched,
-        'Target Accounts': target_accounts,
-    }
+    if with_args == "with_args":
+        return {
+            'Total Interactions': total_interactions,
+            'Successful Interactions': successful_interactions,
+            'Total Followed': total_followed,
+            'Total Unfollowed': total_unfollowed,
+            'Total Likes': total_likes,
+            'Total Comments': total_comments,
+            'Args': args,
+            'Total Watched': total_watched,
+            'Target Accounts': target_accounts,
+        }
+    elif with_args == "with_hashtags":
+        return {
+            'Total Interactions': total_interactions,
+            'Successful Interactions': successful_interactions,
+            'Total Followed': total_followed,
+            'Total Unfollowed': total_unfollowed,
+            'Total Likes': total_likes,
+            'Total Comments': total_comments,
+            'Hashtags Used': hashtags,
+            'Total Watched': total_watched,
+            'Target Accounts': target_accounts,
+        }
+    else:
+        return {
+            'Total Interactions': total_interactions,
+            'Successful Interactions': successful_interactions,
+            'Total Followed': total_followed,
+            'Total Unfollowed': total_unfollowed,
+            'Total Likes': total_likes,
+            'Total Comments': total_comments,
+            'Total Watched': total_watched,
+            'Target Accounts': target_accounts,
+        }
 
 
 if __name__ == "__main__":
+    with_args = sys.argv[1] if len(sys.argv) > 1 else ""
     username = str(input("Enter username: "))
     sessions = get_sessions_for_user(username)
     followers, following = get_most_recent_following_and_followers()

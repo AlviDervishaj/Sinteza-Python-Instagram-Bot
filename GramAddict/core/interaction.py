@@ -29,6 +29,7 @@ from GramAddict.core.utils import (
     random_choice,
     random_sleep,
     save_crash,
+    random_sleepstory,
 )
 from GramAddict.core.views import (
     CurrentStoryView,
@@ -1019,8 +1020,8 @@ def _watch_stories(
             session_state.totalWatched += 1
             nonlocal stories_counter
             stories_counter += 1
-            for _ in range(3):
-                random_sleep(0.5, 1, modulable=False, log=False)
+            for _ in range(2):
+                random_sleepstory(0.1, 1.5, modulable=False, log=True)
                 if story_view.getUsername().strip().casefold() != username.casefold():
                     return False
             like_story()
@@ -1030,8 +1031,9 @@ def _watch_stories(
             obj = device.find(resourceIdMatches=ResourceID.TOOLBAR_LIKE_BUTTON)
             if obj.exists():
                 if not obj.get_selected():
-                    obj.click()
+                    obj.click(sleep=SleepTime.ZERO)
                     logger.info("Story has been liked!")
+                    session_state.totalLikes += 1
                 else:
                     logger.info("Story is already liked!")
             else:
@@ -1051,7 +1053,7 @@ def _watch_stories(
             stories_ring.click(sleep=SleepTime.DEFAULT)
             story_view = CurrentStoryView(device)
             story_frame = story_view.getStoryFrame()
-            story_frame.wait(Timeout.MEDIUM)
+            story_frame.wait(Timeout.ZERO)
             story_username = story_view.getUsername()
             if (
                 story_username == "BUG!"

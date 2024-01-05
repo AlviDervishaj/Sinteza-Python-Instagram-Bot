@@ -5,7 +5,6 @@ from subprocess import Popen
 
 import yaml
 
-
 class Mode(Enum):
     REPEAT = auto()
     SINGLE = auto()
@@ -21,15 +20,15 @@ logging.basicConfig(
 mode = Mode.REPEAT
 
 if __name__ == "__main__":
-    bot_run = "gramaddict run --config".split(" ")
+    bot_run = "python run.py --config".split(" ")
 
-    def process_config():
+    def process_config(config):
         cur_conf = bot_run + [configs.get(config, {}).get("path", "")]
         logger.info(f"Starting `{config}` - {configs[config].get('path')}")
         with Popen(cur_conf, text=True, shell=True) as p:
             p.wait()
 
-    with open("configs-list.yml", "r") as stream:
+    with open("./extra/configs-loader/configs-list.yml", "r") as stream:
         try:
             configs = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
@@ -38,7 +37,7 @@ if __name__ == "__main__":
 
     if mode == Mode.REPEAT:
         for config in cycle(configs):
-            process_config()
+            process_config(config)
     elif mode == Mode.SINGLE:
         for config in configs:
             process_config()

@@ -464,6 +464,14 @@ def random_sleep(inf=0.5, sup=3.0, modulable=True, log=True):
     if log:
         logger.debug(f"{str(delay)[:4]}s sleep")
     sleep(delay)
+def random_sleepstory(inf=0.1, sup=3.0, modulable=True, log=True):
+    MIN_INF = 0.1
+    multiplier = float(args.speed_multiplier)
+    delay = uniform(inf, sup) / (multiplier if modulable else 1.0)
+    delay = max(delay, MIN_INF)
+    if log:
+        logger.info(f"{str(delay)[:4]}s sleep")
+    sleep(delay)
 
 
 def save_crash(device, session_state):
